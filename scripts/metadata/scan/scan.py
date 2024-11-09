@@ -9,6 +9,7 @@ PREFIX: str = "dbavisi.github.io"
 
 HIDDEN_DIRS: list[str] = [
     os.path.join(ROOT_DIR, ".git"),
+    "__pycache__",
 ]
 
 METADATA: dict = {
@@ -46,16 +47,16 @@ def calculate_folder_size(folder: str) -> int:
 def anonymize() -> None:
     for hidden in HIDDEN_DIRS:
         for i, file in enumerate(METADATA["files"]):
-            if file.startswith(hidden):
+            if hidden in file:
                 METADATA["files"][i] = f"{hidden}/<anonymized>"
         for i, folder in enumerate(METADATA["folders"]):
-            if folder.startswith(hidden) and folder != hidden:
+            if hidden in folder and folder != hidden:
                 METADATA["folders"][i] = f"{hidden}/<anonymized>"
         for i, (file, size) in enumerate(METADATA["file_size"]):
-            if file.startswith(hidden):
+            if hidden in file:
                 METADATA["file_size"][i] = (f"{hidden}/<anonymized>", size)
         for i, (folder, size) in enumerate(METADATA["folder_size"]):
-            if folder.startswith(hidden) and folder != hidden:
+            if hidden in folder and folder != hidden:
                 METADATA["folder_size"][i] = (f"{hidden}/<anonymized>", size)
 
     for i, file in enumerate(METADATA["files"]):
@@ -73,7 +74,7 @@ def save() -> None:
     with open("metadata.json", "w") as f:
         json.dump(METADATA, f, indent=4)
 
-def main() -> None:
+def main(save_metadata: bool = True) -> dict | None:
     next_folders: list[str] = scan(ROOT_DIR)
 
     while next_folders:
@@ -86,7 +87,10 @@ def main() -> None:
         METADATA["folder_size"].append((folder, calculate_folder_size(folder)))
 
     anonymize()
-    save()
+    if save_metadata:
+        save()
+    else:
+        return METADATA
 
 if __name__ == "__main__":
     main()
